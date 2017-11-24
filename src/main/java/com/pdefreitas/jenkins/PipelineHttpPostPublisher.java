@@ -9,9 +9,11 @@ import com.squareup.okhttp.Response;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.FilePath;
+import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -20,6 +22,8 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import hudson.plugins.git.util.BuildData;
+import hudson.plugins.git.Revision;
 
 import java.net.URL;
 import java.util.List;
@@ -92,7 +96,6 @@ public class PipelineHttpPostPublisher extends Notifier implements SimpleBuildSt
   }
 
   public void performRun(Run<?, ?> run, FilePath filePath, Launcher launcher, TaskListener taskListener) {    
-    //Map<String, String> envs = run instanceof AbstractBuild ? ((AbstractBuild<?,?>) run).getBuildVariables() : Collections.<String, String>emptyMap();
     try {
       if (run.getArtifacts().isEmpty()) {
         taskListener.getLogger().println("HTTP POST: No artifacts to POST");
@@ -121,6 +124,11 @@ public class PipelineHttpPostPublisher extends Notifier implements SimpleBuildSt
       builder.header("Job-Name", run.getParent().getName());
       builder.header("Build-Number", String.valueOf(run.getNumber()));
       builder.header("Build-Timestamp", String.valueOf(run.getTimeInMillis()));
+      
+      BuildData buildData = run.getAction(BuildData.class);
+      Revision revision = buildData.getLastBuiltRevision();
+      builder.header("Build-Git-Revision", revision.getSha1String());
+
       if (headers != null && headers.length() > 0) {
         String[] lines = headers.split("\r?\n");
         for (String line : lines) {
