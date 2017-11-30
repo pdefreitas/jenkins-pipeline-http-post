@@ -130,9 +130,9 @@ public class PipelineHttpPostPublisher extends Notifier implements SimpleBuildSt
       builder.header("Build-Git-Revision", revision.getSha1String());
 
       if (headers != null && headers.length() > 0) {
-        String[] lines = headers.split("\r?\n");
+        String[] lines = headers.split("&");
         for (String line : lines) {
-          int index = line.indexOf(':');
+          int index = line.indexOf('=');
           builder.header(line.substring(0, index).trim(), line.substring(index + 1).trim());
         }
       }
